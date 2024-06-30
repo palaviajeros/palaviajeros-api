@@ -132,6 +132,14 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
             dict.Remove("Dates");
         }
 
+        if (dict.TryGetValue("Inclusions", out var inclusions))
+        {
+            var collection = inclusions is not List<object> list
+                ? new List<string> { inclusions.ToString() ?? "" }
+                : list.Cast<string>();
+            dict["Inclusions"] = collection.Select(i => i.ToUpper());
+        }
+
         return rotatedData;
     }
 
