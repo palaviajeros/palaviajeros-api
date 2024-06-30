@@ -1,15 +1,15 @@
-using Palaviajeros.Domain.Entities;
+using Palaviajeros.Application.Models;
 
 namespace Palaviajeros.Application.Interfaces;
 
 public interface ITravelPackageCsvDeserializer
 {
-    Task<TravelPackage[]> Deserialize(string csvFileContents);
+    Task<TravelPackageCsvModel[]> Deserialize(string csvFileContents);
 }
 
 public class TravelPackageCsvDeserializer : ITravelPackageCsvDeserializer
 {
-    public Task<TravelPackage[]> Deserialize(string csvFileContents)
+    public Task<TravelPackageCsvModel[]> Deserialize(string csvFileContents)
     {
         // Todo: Parse here using CSV parser
         // domain objects will be generated
