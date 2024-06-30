@@ -8,7 +8,7 @@ public class TravelPackageCsvModel
 {
     public string Code { get; set; }
     public string Name { get; set; }
-    public string Description { get; set; }
+    public string[] Description { get; set; }
     public string[] Inclusions { get; set; }
     public string[] Exclusions { get; set; }
     public DateRange[] TravelDates { get; set; }

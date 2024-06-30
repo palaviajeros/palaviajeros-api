@@ -88,7 +88,7 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
         return Task.FromResult(country);
     }
 
-    private static IEnumerable<TravelPackageCsvModel> ProcessPackagesData(List<dynamic> rotatedData)
+    private static List<TravelPackageCsvModel> ProcessPackagesData(List<dynamic> rotatedData)
     {
         // Write the new list to memory
         using var stream = new MemoryStream();
@@ -97,6 +97,7 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
         using var reader = new StreamReader(stream);
         using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
 
+        // Write the new list to memory
         csvWriter.WriteRecords(rotatedData);
         writer.Flush();
         stream.Position = 0;
@@ -130,8 +131,13 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
     {
         IDictionary<string, object> dict = rotatedData;
         var unparsedItineraries = dict.Where(d => d.Key.Contains("Itinerary")).ToList();
-        dict.Add("Itinerary", unparsedItineraries.Select(r => new DayPlan(int.Parse(r.Key.Split('-')[1]),
-            ((List<object>)r.Value).Select(v => v.ToString() ?? "").ToArray())));
+        dict.Add("Itinerary",
+            unparsedItineraries.Select(kv =>
+                    new DayPlan(int.Parse(kv.Key.Split('-')[1]),
+                        (kv.Value is not List<object> list
+                            ? [kv.Value as string ?? ""]
+                            : list.Select(o => o.ToString()).ToArray())!))
+                .ToArray());
 
         foreach (var (key, _) in unparsedItineraries) dict.Remove(key);
 
