@@ -9,7 +9,7 @@ public class CountryPackagesCsvModel
     }
 
     public CountryPackagesCsvModel(string countryCode, string countryName, string description,
-        List<TravelPackageCsvModel> packages)
+        IEnumerable<TravelPackageCsvModel> packages)
     {
         CountryCode = countryCode;
         CountryName = countryName;
@@ -27,8 +27,8 @@ public sealed class CountryPackagesMap : ClassMap<CountryPackagesCsvModel>
 {
     public CountryPackagesMap()
     {
-        Map(m => m.CountryCode).Name("Code");
-        Map(m => m.CountryName).Name("Name");
+        Map(m => m.CountryCode);
+        Map(m => m.CountryName);
         Map(m => m.Description).Name("Description");
     }
 }

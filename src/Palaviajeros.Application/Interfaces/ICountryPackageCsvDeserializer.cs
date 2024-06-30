@@ -2,6 +2,7 @@ using System.Dynamic;
 using System.Globalization;
 using CsvHelper;
 using CsvHelper.Configuration;
+using Newtonsoft.Json;
 using Palaviajeros.Application.Models;
 using Palaviajeros.Domain.ValueObjects;
 
@@ -82,7 +83,7 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
         }
         var country = ProcessCountryData([unprocessedCountryData]);
         country.Packages =
-            ProcessPackagesData(unprocessedPackagesData.Select(upd => TransformItinerariesToOneField(upd)).ToList())
+            ProcessPackagesData(unprocessedPackagesData.Select(upd => TransformFields(upd)).ToList())
                 .ToList();
 
         return Task.FromResult(country);
@@ -90,44 +91,18 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
 
     private static List<TravelPackageCsvModel> ProcessPackagesData(List<dynamic> rotatedData)
     {
-        // Write the new list to memory
-        using var stream = new MemoryStream();
-        using var writer = new StreamWriter(stream);
-        using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
-        using var reader = new StreamReader(stream);
-        using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
-
-        // Write the new list to memory
-        csvWriter.WriteRecords(rotatedData);
-        writer.Flush();
-        stream.Position = 0;
-
-        // Read in the person records using a ClassMap.
-        csvReader.Context.RegisterClassMap<TravelPackagesMap>();
-        csvReader.Context.RegisterClassMap<ItineraryMap>();
-        return csvReader.GetRecords<TravelPackageCsvModel>().ToList();
+        return JsonConvert.DeserializeObject<List<TravelPackageCsvModel>>(JsonConvert.SerializeObject(rotatedData)) ??
+               [];
     }
 
     private static CountryPackagesCsvModel ProcessCountryData(List<dynamic> rotatedData)
     {
-        using var stream = new MemoryStream();
-        using var writer = new StreamWriter(stream);
-        using var csvWriter = new CsvWriter(writer, CultureInfo.InvariantCulture);
-        using var reader = new StreamReader(stream);
-        using var csvReader = new CsvReader(reader, CultureInfo.InvariantCulture);
-
-        // Write the new list to memory
-        csvWriter.WriteRecords(rotatedData);
-        writer.Flush();
-        stream.Position = 0;
-
-        // Read in the person records using a ClassMap.
-        csvReader.Context.RegisterClassMap<CountryPackagesMap>();
-        var cp = csvReader.GetRecords<CountryPackagesCsvModel>();
-        return cp.First();
+        return (JsonConvert.DeserializeObject<CountryPackagesCsvModel[]>(JsonConvert.SerializeObject(rotatedData)) ??
+                Array.Empty<CountryPackagesCsvModel>())
+            .FirstOrDefault() ?? new CountryPackagesCsvModel();
     }
 
-    private static dynamic TransformItinerariesToOneField(dynamic rotatedData)
+    private static dynamic TransformFields(dynamic rotatedData)
     {
         IDictionary<string, object> dict = rotatedData;
         var unparsedItineraries = dict.Where(d => d.Key.Contains("Itinerary")).ToList();
@@ -140,6 +115,22 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
                 .ToArray());
 
         foreach (var (key, _) in unparsedItineraries) dict.Remove(key);
+
+        if (dict.TryGetValue("Description", out var descValue))
+            dict["Description"] = descValue is not List<object> ? new List<object> { descValue } : descValue;
+
+        if (dict.TryGetValue("Dates", out var dates))
+        {
+            var datesCollection = dates is not List<object> list
+                ? new List<string> { dates.ToString() ?? "" }
+                : list.Cast<string>();
+            dict["TravelDates"] = datesCollection.Select(d =>
+            {
+                var dateRanges = d.Split(',').Select(s => DateTime.Parse(s.Trim())).ToArray();
+                return new DateRange(dateRanges[0], dateRanges[1]);
+            });
+            dict.Remove("Dates");
+        }
 
         return rotatedData;
     }

@@ -10,7 +10,10 @@ public class TravelPackageCsvModel
     public string Name { get; set; }
     public string[] Description { get; set; }
     public string[] Inclusions { get; set; }
-    public string[] Exclusions { get; set; }
+
+    public string[] Exclusions => Enum.GetValues(typeof(Amenity)).Cast<Amenity>().Select(a => a.ToString())
+        .Except(Inclusions.Select(i => i.ToUpper())).ToArray();
+
     public DateRange[] TravelDates { get; set; }
     public DayPlan[] Itinerary { get; set; }
 
@@ -22,8 +25,6 @@ public class TravelPackageCsvModel
             Name = travelPackage.Name,
             Description = travelPackage.Description,
             Inclusions = travelPackage.Inclusions.Select(i => i.ToString()).ToArray(),
-            Exclusions = Enum.GetValues(typeof(Amenity)).Cast<Amenity>().Except(travelPackage.Inclusions)
-                .Select(e => e.ToString()).ToArray(),
             TravelDates = travelPackage.DataRanges.ToArray(),
             Itinerary = travelPackage.Itinerary.ToArray()
         };
@@ -36,7 +37,11 @@ public sealed class TravelPackagesMap : ClassMap<TravelPackageCsvModel>
     {
         Map(m => m.Code);
         Map(m => m.Name);
-        Map(m => m.Description);
+        Map(m => m.Description).Convert(args =>
+        {
+            var flattenMissingArray = args.Value.Description;
+            return string.Join(",", flattenMissingArray);
+        });
         Map(m => m.Inclusions);
         Map(m => m.TravelDates).Name("Dates");
         Map(m => m.Itinerary);
