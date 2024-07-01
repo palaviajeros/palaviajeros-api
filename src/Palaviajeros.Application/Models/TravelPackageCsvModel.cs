@@ -16,6 +16,7 @@ public class TravelPackageCsvModel
 
     public DateRange[] TravelDates { get; set; }
     public DayPlan[] Itinerary { get; set; }
+    public float Price { get; set; }
 
     public static TravelPackageCsvModel FromDomain(TravelPackage travelPackage)
     {
@@ -45,6 +46,7 @@ public sealed class TravelPackagesMap : ClassMap<TravelPackageCsvModel>
         Map(m => m.Inclusions);
         Map(m => m.TravelDates).Name("Dates");
         Map(m => m.Itinerary);
+        Map(m => m.Price);
     }
 }
 
