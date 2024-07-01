@@ -1,3 +1,3 @@
 namespace Palaviajeros.Domain.ValueObjects;
 
-public record DayPlan(int dayNo, string activity);
+public record DayPlan(int dayNo, string[] activities);
