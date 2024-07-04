@@ -5,5 +5,7 @@ public enum Amenity
     FLIGHT,
     MEALS,
     TRANSFERS,
+    HOTEL,
+    TOURS,
     LODGING
 }
