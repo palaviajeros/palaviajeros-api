@@ -11,12 +11,13 @@ public class TravelPackageCsvModel
     public string[] Description { get; set; }
     public string[] Inclusions { get; set; }
 
-    public string[] Exclusions => Enum.GetValues(typeof(Amenity)).Cast<Amenity>().Select(a => a.ToString())
+    public string[] Exclusions => Enum.GetValues(typeof(Services)).Cast<Services>().Select(a => a.ToString())
         .Except(Inclusions.Select(i => i.ToUpper())).ToArray();
 
     public DateRange[] TravelDates { get; set; }
     public DayPlan[] Itinerary { get; set; }
     public float Price { get; set; }
+    public bool? IsFlexible { get; set; }
 
     public static TravelPackageCsvModel FromDomain(TravelPackage travelPackage)
     {
@@ -47,6 +48,7 @@ public sealed class TravelPackagesMap : ClassMap<TravelPackageCsvModel>
         Map(m => m.TravelDates).Name("Dates");
         Map(m => m.Itinerary);
         Map(m => m.Price);
+        Map(m => m.IsFlexible);
     }
 }
 
