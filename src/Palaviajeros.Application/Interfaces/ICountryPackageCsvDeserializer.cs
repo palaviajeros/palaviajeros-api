@@ -22,6 +22,9 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
         Pending
     }
 
+    private static readonly HashSet<string> YesValues = ["YES", "Y"];
+    private static readonly HashSet<string> NoValues = ["NO", "N"];
+
     public Task<CountryPackagesCsvModel> Deserialize(Stream fileStream)
     {
         var config = new CsvConfiguration(CultureInfo.InvariantCulture)
@@ -80,7 +83,24 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+
+            if (dynamicObjects.Count > 0)
+            {
+                var rotatedData = RotateData(dynamicObjects);
+                switch (readMode)
+                {
+                    case ReadMode.Package:
+                        unprocessedPackagesData.Add(rotatedData);
+                        break;
+                    case ReadMode.Country:
+                        unprocessedCountryData = rotatedData;
+                        break;
+                }
+
+                dynamicObjects.Clear();
+            }
         }
+
         var country = ProcessCountryData([unprocessedCountryData]);
         country.Packages =
             ProcessPackagesData(unprocessedPackagesData.Select(upd => TransformFields(upd)).ToList())
@@ -98,7 +118,7 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
     private static CountryPackagesCsvModel ProcessCountryData(List<dynamic> rotatedData)
     {
         return (JsonConvert.DeserializeObject<CountryPackagesCsvModel[]>(JsonConvert.SerializeObject(rotatedData)) ??
-                Array.Empty<CountryPackagesCsvModel>())
+                [])
             .FirstOrDefault() ?? new CountryPackagesCsvModel();
     }
 
@@ -140,6 +160,19 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
             dict["Inclusions"] = collection.Select(i => i.ToUpper());
         }
 
+
+        if (dict.TryGetValue("Flexible", out var isFlexible))
+        {
+            if (YesValues.Contains(isFlexible?.ToString()?.ToUpper()) || isFlexible?.ToString() == "")
+                dict["IsFlexible"] = true;
+            else if (NoValues.Contains(isFlexible?.ToString()?.ToUpper())) dict["IsFlexible"] = false;
+            dict.Remove("Flexible");
+        }
+        else
+        {
+            dict["IsFlexible"] = false;
+        }
+
         return rotatedData;
     }
 
@@ -149,7 +182,7 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
 
         var flippedRecord = new ExpandoObject() as IDictionary<string, object>;
         for (var i = 2; i <= rows[0].Count; i++)
-            foreach (var row in rows.Where(row => !string.IsNullOrEmpty(row["Field" + i].ToString())))
+            foreach (var row in rows.Where(row => !string.IsNullOrEmpty(row["Field" + i].ToString()) || i == 2))
             {
                 var fieldName = (string)row["Field1"];
                 var cellValue = row["Field" + i];
