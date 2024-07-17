@@ -1,9 +1,10 @@
 namespace Palaviajeros.Domain.ValueObjects;
 
-public enum Amenity
+public enum Services
 {
     FLIGHT,
     MEALS,
+    ACCOMMODATION,
     TRANSFERS,
-    HOTEL
+    TOURS,
 }

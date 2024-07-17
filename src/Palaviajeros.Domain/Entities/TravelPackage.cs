@@ -9,7 +9,7 @@ public class TravelPackage : Entity
     public string PackageCode { get; }
     public string Name { get; }
     public string[] Description { get; }
-    public IEnumerable<Amenity> Inclusions { get; }
+    public IEnumerable<Services> Inclusions { get; }
     public IEnumerable<DateRange> DataRanges { get; }
     public IEnumerable<DayPlan> Itinerary { get; }
 }

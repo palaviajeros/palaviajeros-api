@@ -11,7 +11,7 @@ public class TravelPackageCsvModel
     public string[] Description { get; set; }
     public string[] Inclusions { get; set; }
 
-    public string[] Exclusions => Enum.GetValues(typeof(Amenity)).Cast<Amenity>().Select(a => a.ToString())
+    public string[] Exclusions => Enum.GetValues(typeof(Services)).Cast<Services>().Select(a => a.ToString())
         .Except(Inclusions.Select(i => i.ToUpper())).ToArray();
 
     public DateRange[] TravelDates { get; set; }
