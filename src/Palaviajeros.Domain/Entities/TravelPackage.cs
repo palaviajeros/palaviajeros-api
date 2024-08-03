@@ -10,6 +10,6 @@ public class TravelPackage : Entity
     public string Name { get; }
     public string[] Description { get; }
     public IEnumerable<Services> Inclusions { get; }
-    public IEnumerable<DateRange> DataRanges { get; }
+    public IEnumerable<DateOnly> TravelDates { get; }
     public IEnumerable<DayPlan> Itinerary { get; }
 }
