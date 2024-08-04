@@ -15,15 +15,15 @@ public interface ICountryPackageCsvDeserializer
 
 public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
 {
-    public enum ReadMode
+    private enum ReadMode
     {
         Country,
         Package,
         Pending
     }
 
-    private static readonly HashSet<string> YesValues = ["YES", "Y"];
-    private static readonly HashSet<string> NoValues = ["NO", "N"];
+    private static readonly HashSet<string?> YesValues = ["YES", "Y"];
+    private static readonly HashSet<string?> NoValues = ["NO", "N"];
 
     public Task<CountryPackagesCsvModel> Deserialize(Stream fileStream)
     {
@@ -32,7 +32,7 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
             HasHeaderRecord = false,
             MissingFieldFound = null
         };
-        dynamic unprocessedCountryData = null;
+        dynamic? unprocessedCountryData = null;
         var unprocessedPackagesData = new List<dynamic>();
 
         using var reader = new StreamReader(fileStream);
@@ -109,9 +109,9 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
         return Task.FromResult(country);
     }
 
-    private static List<TravelPackageCsvModel> ProcessPackagesData(List<dynamic> rotatedData)
+    private static TravelPackageCsvModel[] ProcessPackagesData(List<dynamic> rotatedData)
     {
-        return JsonConvert.DeserializeObject<List<TravelPackageCsvModel>>(JsonConvert.SerializeObject(rotatedData)) ??
+        return JsonConvert.DeserializeObject<TravelPackageCsvModel[]>(JsonConvert.SerializeObject(rotatedData)) ??
                [];
     }
 
@@ -144,11 +144,7 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
             var datesCollection = dates is not List<object> list
                 ? new List<string> { dates.ToString() ?? "" }
                 : list.Cast<string>();
-            dict["TravelDates"] = datesCollection.Select(d =>
-            {
-                var dateRanges = d.Split(',').Select(s => DateTime.Parse(s.Trim())).ToArray();
-                return new DateRange(dateRanges[0], dateRanges[1]);
-            });
+            dict["TravelDates"] = datesCollection.Select(DateOnly.Parse);
             dict.Remove("Dates");
         }
 
@@ -159,13 +155,12 @@ public class CountryPackageCsvDeserializer : ICountryPackageCsvDeserializer
                 : list.Cast<string>();
             dict["Inclusions"] = collection.Select(i => i.ToUpper());
         }
-
-
+        
         if (dict.TryGetValue("Flexible", out var isFlexible))
         {
-            if (YesValues.Contains(isFlexible?.ToString()?.ToUpper()) || isFlexible?.ToString() == "")
+            if (YesValues.Contains(isFlexible.ToString()?.ToUpper()) || isFlexible.ToString() == "")
                 dict["IsFlexible"] = true;
-            else if (NoValues.Contains(isFlexible?.ToString()?.ToUpper())) dict["IsFlexible"] = false;
+            else if (NoValues.Contains(isFlexible.ToString()?.ToUpper())) dict["IsFlexible"] = false;
             dict.Remove("Flexible");
         }
         else
